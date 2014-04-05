@@ -3,11 +3,11 @@
 
 #include <QObject>
 #include <QDBusInterface>
-#include <QtDebug>
+#include <QDebug>
 
 #define AUTOPROPERTY(type, name, Name) \
 	public: \
-	void set ## Name(type s) { m ## Name = s; } \
+    void set ## Name(type s) { m ## Name = s; qDebug() << "AUTOPROPERTY macro "<< #Name << " type:" << #type << " value:" << s; } \
 	type name() { return m ## Name; } \
 	private: \
 	type m ## Name;
@@ -31,7 +31,7 @@ class AmbProperty: public QObject
 
 	public:
 
-		AmbProperty():mDBusInterface(NULL),mZone(0),mTime(0) { }
+    AmbProperty():mZone(0),mTime(0) { }
 
 	AmbProperty(QString op, QString iface, QString propName);
 
@@ -40,34 +40,32 @@ class AmbProperty: public QObject
 		return mValue;
 	}
 
-	void setValue(QVariant v)
-	{
-		if(!mDBusInterface || !mDBusInterface->isValid())
-		{
-			qDebug()<<"error Interface is not valid "<<interfaceName();
-		}
+    void setValue(QVariant v)
+    {
+        qWarning() << "NOTIMPLEMENTED";
+//        qDebug() << "value:" << v;
+//        if(!mDBusInterface || !mDBusInterface->isValid())
+//        {
+//            qDebug()<<"error Interface is not valid "<<interfaceName();
+//            return;
+//        }
 
-		mDBusInterface->setProperty(propertyName().toUtf8(), v);
-	}
+//        mDBusInterface->setProperty(propertyName().toUtf8(), v);
+    }
 
 	double time(){ return mTime; }
 
 Q_SIGNALS:	
 	void valueChanged(QVariant val);
 
-	///TODO: remove
-	void signalChanged(QVariant val);
-
 public Q_SLOTS:
 	void connect();
 
 private Q_SLOTS:
-	void propertyChangedSlot(QString, QVariantMap values, QVariantMap);
-	void propertyChanged1(QDBusVariant, double);
+    void propertyChangedSlot(QString, QVariantMap values, QStringList);
 
 private:
 	void getObjectPath();
-	QDBusInterface* mDBusInterface;
 	double mTime;
 	QVariant mValue;
 };

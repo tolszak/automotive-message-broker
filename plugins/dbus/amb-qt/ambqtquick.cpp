@@ -1,14 +1,14 @@
+#include <QDebug>
+#include <QtQml/QtQml>
+
 #include "ambqtquick.h"
-#include <QtQml/qqml.h>
+#include "ambqt.h"
 
-void Components::registerTypes(const char *uri)
+void AmbQtQuickPlugin::registerTypes(const char *uri)
 {
-	qmlRegisterType<AmbProperty>(uri,0,1,"AutomotivePropertyItem");
-
+    Q_ASSERT(QLatin1String(uri) == QLatin1String("amb"));
+    Q_UNUSED(uri);
+    qmlRegisterType<AmbProperty>(uri,0,1,"AutomotivePropertyItem");
 }
 
-void Components::initializeEngine(QQmlEngine *, const char *)
-{
-
-}
 

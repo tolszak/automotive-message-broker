@@ -15,7 +15,7 @@ int main(int argc, char** argv)
 	double totalLatency=0;
 	int numSamples=0;
 
-	QObject::connect(&speed, &AmbProperty::signalChanged,[&](QVariant val)
+	/*	QObject::connect(&speed, &AmbProperty::signalChanged,[&](QVariant val)
 	{
 		double t1 = speed.time();
 		double t2 = amb::currentTime();
@@ -27,7 +27,7 @@ int main(int argc, char** argv)
 		numSamples++;
 		DebugOut(0)<<"Average: "<<totalLatency / numSamples<<std::endl;
 	});
-
+	*/
 	speed.setPropertyName("VehicleSpeed");
 	speed.connect();
 
