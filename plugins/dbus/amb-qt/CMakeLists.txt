@@ -21,8 +21,14 @@ find_package(Qt5DBus REQUIRED)
 # Instruct CMake to run moc automatically when needed.
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
-set(ambqt_headers ambqt.h amb-qt_global.h)
-set(ambqt_sources ambqt.cpp)
+set(ambqt_headers ambqt.h
+                  amb-qt_global.h
+                  ambzone.h
+                  ambabstractproperty.h
+                  ambvehiclespeed.h)
+set(ambqt_sources ambqt.cpp
+                  ambabstractproperty.cpp
+                  ambvehiclespeed.cpp)
 set(ambqtquick_sources ambqtquick.cpp)
 set(ambqtquick_headers ambqtquick.h)
 
@@ -38,7 +44,6 @@ target_link_libraries(amb-qt amb -L${CMAKE_CURRENT_BINARY_DIR}/lib ${link_librar
 target_link_libraries(ambqtquick amb-qt -L${CMAKE_CURRENT_BINARY_DIR}/lib ${link_libraries} ${gio_LIBRARIES})
 
 add_executable(ambtestclient test.cpp)
-#qt5_use_modules(ambtestclient Core DBus)
 target_link_libraries(ambtestclient amb amb-qt -L${CMAKE_CURRENT_BINARY_DIR}/lib ${link_libraries} ${gio_LIBRARIES})
 
 install (TARGETS amb-qt LIBRARY DESTINATION lib${LIB_SUFFIX})

@@ -5,69 +5,43 @@
 #include <QDBusInterface>
 #include <QDebug>
 
-#define AUTOPROPERTY(type, name, Name) \
-	public: \
-    void set ## Name(type s) { m ## Name = s; qDebug() << "AUTOPROPERTY macro "<< #Name << " type:" << #type << " value:" << s; } \
-	type name() { return m ## Name; } \
-	private: \
-	type m ## Name;
-
-class QDBusInterface;
-
 class AmbProperty: public QObject
 {
-	Q_OBJECT
-	Q_PROPERTY(QString propertyName READ propertyName WRITE setPropertyName)
-	AUTOPROPERTY(QString, propertyName, PropertyName)
-	Q_PROPERTY(QVariant value READ value WRITE setValue NOTIFY valueChanged)
-	Q_PROPERTY(QString interfaceName READ interfaceName WRITE setInterfaceName)
-	AUTOPROPERTY(QString, interfaceName, InterfaceName)
-	Q_PROPERTY(QString objectPath READ objectPath WRITE setObjectPath)
-	AUTOPROPERTY(QString, objectPath, ObjectPath)
-	Q_PROPERTY(int zone READ zone WRITE setZone)
-	AUTOPROPERTY(int, zone, Zone)
-	Q_PROPERTY(double time READ time)
+    Q_OBJECT
+    Q_PROPERTY(QString propertyName READ propertyName WRITE setPropertyName NOTIFY propertyNameChanged)
+    Q_PROPERTY(QVariant value READ value WRITE setValue NOTIFY valueChanged)
+    Q_PROPERTY(int zone READ zone WRITE setZone NOTIFY zoneChanged)
+    Q_PROPERTY(double time READ time NOTIFY timeChanged)
 
+public:
+    AmbProperty(QObject * parent = 0);
+    QString propertyName() const;
+    QVariant value() const;
+    int zone() const;
+    double time() const;
 
-	public:
-
-    AmbProperty():mZone(0),mTime(0) { }
-
-	AmbProperty(QString op, QString iface, QString propName);
-
-	QVariant value()
-	{
-		return mValue;
-	}
-
-    void setValue(QVariant v)
-    {
-        qWarning() << "NOTIMPLEMENTED";
-//        qDebug() << "value:" << v;
-//        if(!mDBusInterface || !mDBusInterface->isValid())
-//        {
-//            qDebug()<<"error Interface is not valid "<<interfaceName();
-//            return;
-//        }
-
-//        mDBusInterface->setProperty(propertyName().toUtf8(), v);
-    }
-
-	double time(){ return mTime; }
-
-Q_SIGNALS:	
-	void valueChanged(QVariant val);
+Q_SIGNALS:
+    void propertyNameChanged(QString arg);
+    void valueChanged(QVariant arg);
+    void zoneChanged(int arg);
+    void timeChanged(double arg);
 
 public Q_SLOTS:
-	void connect();
+    void setPropertyName(QString arg);
+    void setValue(QVariant arg);
+    void setZone(int arg);
 
 private Q_SLOTS:
     void propertyChangedSlot(QString, QVariantMap values, QStringList);
 
 private:
-	void getObjectPath();
-	double mTime;
-	QVariant mValue;
+    void reconnect();
+    double m_time;
+    QVariant m_value;
+    QString m_propertyName;
+    QString m_interfaceName;
+    QString m_objectPath;
+    int m_zone;
 };
 
 #endif // AMBQT_H

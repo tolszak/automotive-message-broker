@@ -6,104 +6,127 @@
 
 
 const char *ambDBusInterfaceName = "org.automotive.message.broker";
-const char *ambDBusObjectPath = "/";
+const char *ambDBusRootPath = "/";
 const char *ambManagerDBusInterfaceName = "org.automotive.Manager";
 
-AmbProperty::AmbProperty(QString op, QString iface, QString propName)
-    :QObject(), mPropertyName(propName),mInterfaceName(iface), mObjectPath(op),mZone(0)
+AmbProperty::AmbProperty(QObject *parent):
+    QObject(parent), m_time(0), m_zone(0)
 {
-    //connect();
-}
 
+}
 
 void AmbProperty::propertyChangedSlot(QString, QVariantMap values, QStringList )
 {
     qDebug() << values;
-    mTime = values.value("Time").toDouble();
-    if (mValue == values.value(mPropertyName))
+    m_time = values.value("Time").toDouble();
+    if (m_value == values.value(m_propertyName))
         return;
 
-    mValue = values.value(mPropertyName);
-    emit valueChanged(mValue);
+    m_value = values.value(m_propertyName);
+    emit valueChanged(m_value);
 }
 
-//void AmbProperty::propertyChanged1(QDBusVariant val, double t)
-//{
-//    qDebug() << "val:" << val.variant() << "t:" << t;
-//	mTime = t;
-//	mValue = val.variant();
+QString AmbProperty::propertyName() const
+{
+    return m_propertyName;
+}
 
-//	signalChanged(mValue);
+QVariant AmbProperty::value() const
+{
+    return m_value;
+}
+double AmbProperty::time() const
+{
+    return m_time;
+}
+
+//QString AmbProperty::interfaceName() const
+//{
+//    return m_interfaceName;
 //}
 
-void AmbProperty::connect()
+//QString AmbProperty::objectPath() const
+//{
+//    return m_objectPath;
+//}
+
+int AmbProperty::zone() const
 {
-
-//    if(mDBusInterface)
-//    {
-//        delete mDBusInterface;
-//    }
-
-	if(mObjectPath.isEmpty())
-		getObjectPath();
-
-    if(mInterfaceName.isEmpty())
-        mInterfaceName = "org.automotive."+mPropertyName;
-//    qDebug() << "creating interface";
-//	mDBusInterface = new QDBusInterface("org.automotive.message.broker",objectPath(), interfaceName(), QDBusConnection::systemBus(),this);
-//    qDebug()<<"Path: "<<objectPath();
-//    qDebug()<<"Interface: "<<interfaceName();
-//	if(!mDBusInterface->isValid())
-//	{
-//		qDebug()<<"Failed to create dbus interface for property "<<propertyName();
-//		qDebug()<<"Error: "<<QDBusConnection::systemBus().lastError().message();
-//    } else
-//        qDebug() << "interface valid";
-
-    qDebug() << "connecting properties changed";
-    qDebug()<<"path: "<<objectPath();
-    qDebug()<<"interface: "<<interfaceName();
-
-	if(!QDBusConnection::systemBus().connect("org.automotive.message.broker", objectPath(), "org.freedesktop.DBus.Properties",
-                                             "PropertiesChanged", this, SLOT(propertyChangedSlot(QString,QVariantMap,QStringList))))
-	{
-		qDebug()<<"Failed to connect to signal";
-		qDebug()<<"Error: "<<QDBusConnection::systemBus().lastError().message();
-    } else
-        qDebug() << "properties changed valid";
-
-    ///TODO: only use PropertiesChanged...  treat AmbProperty like an object rather than a representation of just a single property in the object
-//    qDebug() << "connecting system bus";
-//    qDebug()<<"path: "<<objectPath();
-//    qDebug()<<"interface: "<<interfaceName();
-//    qDebug()<<"signal: "<<propertyName();
-//	if(!QDBusConnection::systemBus().connect("org.automotive.message.broker", objectPath(), mInterfaceName,
-//											 signalName, this, SLOT(propertyChanged1(QDBusVariant,double))))
-//	{
-//		qDebug()<<"Failed to connect to signal";
-//		qDebug()<<"Error: "<<QDBusConnection::systemBus().lastError().message();
-//    } else
-//        qDebug() << "system bus valid";
+    return m_zone;
 }
 
-void AmbProperty::getObjectPath()
+void AmbProperty::setPropertyName(QString arg)
 {
+    if (m_propertyName != arg) {
+        m_propertyName = arg;
+        reconnect();
+        emit propertyNameChanged(arg);
+    }
+}
+
+void AmbProperty::setValue(QVariant /*arg*/)
+{
+    qWarning() << "NOT IMPLEMENTED";
+}
+
+//void AmbProperty::setInterfaceName(QString arg)
+//{
+//    if (m_interfaceName != arg) {
+//        m_interfaceName = arg;
+//        emit interfaceNameChanged(arg);
+//    }
+//}
+
+//void AmbProperty::setObjectPath(QString arg)
+//{
+//    if (m_objectPath != arg) {
+//        m_objectPath = arg;
+//        emit objectPathChanged(arg);
+//    }
+//}
+
+void AmbProperty::setZone(int arg)
+{
+    if (m_zone != arg) {
+        m_zone = arg;
+        emit zoneChanged(arg);
+        reconnect();
+    }
+}
+
+void AmbProperty::reconnect()
+{
+    if (!m_objectPath.isEmpty()) {
+        if (!QDBusConnection::systemBus().disconnect(ambDBusInterfaceName, m_objectPath, "org.freedesktop.DBus.Properties",
+                                                     "PropertiesChanged", this, SLOT(propertyChangedSlot(QString,QVariantMap,QStringList)))) {
+            qDebug()<<"Failed to disconnect propertyChanged signal for object:" <<m_objectPath;
+            qDebug()<<"Error: "<<QDBusConnection::systemBus().lastError().message();
+        }
+        m_objectPath.clear();
+    }
 
     QDBusInterface managerIface(ambDBusInterfaceName,
-                                ambDBusObjectPath,
+                                ambDBusRootPath,
                                 ambManagerDBusInterfaceName,
                                 QDBusConnection::systemBus(), this);
 
-	if(!managerIface.isValid())
-	{
+    if(!managerIface.isValid())
+    {
         qDebug()<<"Failed to create manager interface:" << managerIface.lastError().message();
-		return;
-	}
-    qDebug() << "finding object object for property:" << mPropertyName << "and Path:" << mZone;
-	QDBusReply<QDBusObjectPath> reply = managerIface.call("FindObjectForZone", mPropertyName, mZone);
+        return;
+    }
 
-	if(reply.isValid())
-	{
-		mObjectPath = reply.value().path();
-	}
+    QDBusReply<QDBusObjectPath> reply = managerIface.call("FindObjectForZone", m_propertyName, m_zone);
+
+    if(reply.isValid())
+    {
+        m_objectPath = reply.value().path();
+    }
+
+    if(!QDBusConnection::systemBus().connect(ambDBusInterfaceName, m_objectPath, "org.freedesktop.DBus.Properties",
+                                             "PropertiesChanged", this, SLOT(propertyChangedSlot(QString,QVariantMap,QStringList))))
+    {
+        qDebug()<<"Failed to connect propertyChange signal for object path:" << m_objectPath;
+        qDebug()<<"Error: "<<QDBusConnection::systemBus().lastError().message();
+    }
 }
